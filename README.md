@@ -16,7 +16,7 @@ In the case that the path ```path``` returned by ```Walk``` is disconected, a li
 
 This is achieved by hexagonal linear interpolation, where given ```N``` is the Manhattan distance between ```(x, y)``` and ```(x_link, y_link)```, we sample ```N+1``` equally spaced points along the ray ```(x, y) + (x_link - x, y_link - y) * t```. The sampled points are then rounded to valid hexagonal odd-r offset coordinates and used to build a connecting path between the disjoint islands.
 
-![demo](demos/demo.gif)
+![demo](demo/demo.gif)
 
 ## Game Inspirations
 [Into Ruin](https://www.lexaloffle.com/bbs/?tid=49928)
