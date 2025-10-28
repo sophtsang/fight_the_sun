@@ -16,7 +16,7 @@ namespace NaiveRandomWalk
     class DungeonWalk
     {
         private int WIDTH = 50;
-        private int HEIGHT = 32;
+        private int HEIGHT = 20;
         private Hexagons hex = new Hexagons();
         private dungeon_t dungeon;
         private Random rand = new Random();
@@ -29,7 +29,7 @@ namespace NaiveRandomWalk
 
             procedural.dungeon = procedural.InitDungeon(procedural.WIDTH, procedural.HEIGHT);
 
-            List<path_t> all_paths = procedural.RandomWalk(procedural.dungeon, 50, 20);
+            List<path_t> all_paths = procedural.RandomWalk(procedural.dungeon, 5, 25);
 
             procedural.PrintDungeon();
         }
@@ -39,7 +39,7 @@ namespace NaiveRandomWalk
             dungeon_t dungeon = new dungeon_t(h);
             for (int i = 0; i < h; i++)
             {
-                dungeon.Add(new List<Char>(Enumerable.Repeat('#', w)));
+                dungeon.Add(new List<Char>(Enumerable.Repeat('|', w)));
             }
 
             return dungeon;
@@ -62,6 +62,7 @@ namespace NaiveRandomWalk
                 
                 if (visited.Count != 0) (x_link, y_link) = visited.ElementAt(rand.Next(visited.Count));
                 path_t path = Walk(x, y, maxLength, dungeon);
+                randomPaths.Add(path);
 
                 foreach ((int x_new, int y_new) in path) visited.Add((x_new, y_new));
                 
@@ -69,11 +70,10 @@ namespace NaiveRandomWalk
                 // if connected is true after Walk, then [path] is connected to the current dungeon. else, use JPS to connect [path] to some random end point.
                 if (!connected && visited.Count != 0)
                 {
-                    // drawlinearly-interpolated path from (x, y) to (x_link, y_link)
-                    Console.WriteLine("disconnected start (" + x.ToString() + ", " + y.ToString() + ")");
-
+                    path_t lerp = new path_t();
+                    // draw linearly-interpolated path from (x, y) to (x_link, y_link)
                     List<Hexagons.HexCoord> hex_line = hex.hex_lerp(new Hexagons.Odd_R(x, y), new Hexagons.Odd_R(x_link, y_link));
-                    
+
                     foreach (Hexagons.HexCoord hex in hex_line)
                     {
                         switch (hex)
@@ -85,18 +85,14 @@ namespace NaiveRandomWalk
                                 break;
 
                             case (Hexagons.Odd_R H):
-                                Console.WriteLine("lerping (" + H.col.ToString() + ", " + H.row.ToString() + ")");
-                                dungeon[H.col][H.row] = '`';
+                                dungeon[H.col][H.row] = '@';
+                                lerp.Add((H.col, H.row));
                                 break;
                         }
                     }
-                    Console.WriteLine("disconnected end (" + x_link.ToString() + ", " + y_link.ToString() + ")");
-                } else
-                {
-                    Console.WriteLine("connected " + visited.Count.ToString());
-                }
 
-                randomPaths.Add(path);
+                    randomPaths.Add(lerp);
+                }
 
                 dungeon[x][y] = '*';
 
@@ -130,7 +126,7 @@ namespace NaiveRandomWalk
                 if (visited.Contains((x, y))) connected = true;
             }
 
-            Console.WriteLine("tilemap.SetTile(new Vector3Int(" + (-x + 5).ToString() + ", " + (y - 10).ToString() + ", 0), tileToPlace);");
+            // Console.WriteLine("tilemap.SetTile(new Vector3Int(" + (-x + 5).ToString() + ", " + (y - 10).ToString() + ", 0), tileToPlace);");
 
             path_t path = new path_t { (x, y) };
 
