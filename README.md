@@ -18,6 +18,15 @@ This is achieved by hexagonal linear interpolation, where given ```N``` is the M
 
 ![demo](demo/demo.gif)
 
+## Random Walk with Re-Weighted Directions
+At the start of a walk, we weight all 6 possible next directions equally and sample uniformly at random. Let the next direction to move to be ```(dx, dy)```. Then, let the weights for sampling directions in the next iteration $t-1$ of walk be re-computed as follows:
+1) With ```Hexagons.cube_distance```, compute the hexagonal Manhattan distance ```dist[i]``` in Cube coordinates between each possible direction in ```directions``` and the sampled next direction ```(dx, dy)```.
+2) New weights $w_{t+1}[i]$ are proportional to $e^{-\alpha(dist[i])}$. Specifically we compute $w_{t+1}[i] \leftarrow w_{t}[i] * e^{-\alpha(dist[i])}$, and normalize such that all the recomputed weights sum to 1.
+
+We define hyperparameter $\alpha$ to toggle how much we want the current sampled direction to influence the sampling of the next direction. Let us consider two of the extremes for setting $\alpha$:
+1) If $\alpha = 0$, then $e^{-\alpha(dist[i])} = 1$ for all $i \in [0, 6)$. This means that the weights for directions will always be $\frac{1}{6}$ and we will be sampling uniformly at random for each iteration, independent of the past directions. Setting $\alpha = 0$ is good for high entropy dungeons, such as random caves and winding tunnels.
+2) If $\alpha = \infty$, then $e^{-\alpha(dist[i])} = 1$ if and only if $dist[i] = 0$, else $e^{-\alpha(dist[i])} = 0$. This enforces that the next direction will be the same as the current direction, and the resulting path will be essentially a straight line in the initially sampled direction.  
+
 ## Game Inspirations
 [Into Ruin](https://www.lexaloffle.com/bbs/?tid=49928)
 
