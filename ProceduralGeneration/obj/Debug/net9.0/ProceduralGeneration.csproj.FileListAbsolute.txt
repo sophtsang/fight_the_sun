@@ -1,0 +1,14 @@
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\bin\Debug\net9.0\ProceduralGeneration.exe
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\bin\Debug\net9.0\ProceduralGeneration.deps.json
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\bin\Debug\net9.0\ProceduralGeneration.runtimeconfig.json
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\bin\Debug\net9.0\ProceduralGeneration.dll
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\bin\Debug\net9.0\ProceduralGeneration.pdb
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\obj\Debug\net9.0\ProceduralGeneration.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\obj\Debug\net9.0\ProceduralGeneration.AssemblyInfoInputs.cache
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\obj\Debug\net9.0\ProceduralGeneration.AssemblyInfo.cs
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\obj\Debug\net9.0\ProceduralGeneration.csproj.CoreCompileInputs.cache
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\obj\Debug\net9.0\ProceduralGeneration.dll
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\obj\Debug\net9.0\refint\ProceduralGeneration.dll
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\obj\Debug\net9.0\ProceduralGeneration.pdb
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\obj\Debug\net9.0\ProceduralGeneration.genruntimeconfig.cache
+C:\Users\sophi\OneDrive\Desktop\unity\Fight The Sun!\ProceduralGeneration\obj\Debug\net9.0\ref\ProceduralGeneration.dll
