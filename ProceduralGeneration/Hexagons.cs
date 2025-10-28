@@ -7,7 +7,8 @@ public class Hexagons
     public interface HexCoord { }
     public record struct Cube(int q, int r, int s) : HexCoord;
     public record struct Axial(int q, int r) : HexCoord;
-    public record struct Odd_R(int col, int row) : HexCoord;
+    public record struct Odd_Q(int row, int col) : HexCoord;
+    // in Unity, we have (row, col) instead of (col, row)
     
     // A class for all functions dealing with 2D hexagonal grids.
     public List<HexCoord> hex_lerp(HexCoord a_, HexCoord b_)
@@ -27,8 +28,8 @@ public class Hexagons
                 (a, b) = (new Cube(A.q, A.r, -A.q - A.r), new Cube(B.q, B.r, -B.q - B.r));
                 break;
 
-            case (Odd_R A, Odd_R B):
-                (a, b) = (oddr_to_cube(A), oddr_to_cube(B));
+            case (Odd_Q A, Odd_Q B):
+                (a, b) = (oddq_to_cube(A), oddq_to_cube(B));
                 break;
 
             default:
@@ -65,8 +66,8 @@ public class Hexagons
                     path.Add(new Axial(nth_sample.q, nth_sample.r));
                     break;
 
-                case (Odd_R A, Odd_R B):
-                    path.Add(cube_to_oddr(nth_sample));
+                case (Odd_Q A, Odd_Q B):
+                    path.Add(cube_to_oddq(nth_sample));
                     break;
             }
         }
@@ -102,19 +103,19 @@ public class Hexagons
         return (Math.Abs(a.q - b.q) + Math.Abs(a.r- b.r) + Math.Abs(a.s - b.s)) / 2;
     }
 
-    Cube oddr_to_cube(Odd_R hex)
+    Cube oddq_to_cube(Odd_Q hex)
     {
-        int parity = hex.row & 1;
-        int q = hex.col - (hex.row - parity) / 2;
-        int r = hex.row;
+        int parity = hex.col & 1;
+        int q = hex.col;
+        int r = hex.row - (hex.col - parity) / 2;
         return new Cube(q, r, -q-r);
     }
     
-    Odd_R cube_to_oddr(Cube hex)
+    Odd_Q cube_to_oddq(Cube hex)
     {
-        int parity = hex.r & 1;
-        int col = hex.q + (hex.r - parity) / 2;
-        int row = hex.r;
-        return new Odd_R(col, row);
+        int parity = hex.q & 1;
+        int col = hex.q;
+        int row = hex.r + (hex.q - parity) / 2;
+        return new Odd_Q(row, col);
     }
 }

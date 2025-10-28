@@ -72,7 +72,7 @@ namespace NaiveRandomWalk
                 {
                     path_t lerp = new path_t();
                     // draw linearly-interpolated path from (x, y) to (x_link, y_link)
-                    List<Hexagons.HexCoord> hex_line = hex.hex_lerp(new Hexagons.Odd_R(x, y), new Hexagons.Odd_R(x_link, y_link));
+                    List<Hexagons.HexCoord> hex_line = hex.hex_lerp(new Hexagons.Odd_Q(x, y), new Hexagons.Odd_Q(x_link, y_link));
 
                     foreach (Hexagons.HexCoord hex in hex_line)
                     {
@@ -84,9 +84,9 @@ namespace NaiveRandomWalk
                             case (Hexagons.Axial H):
                                 break;
 
-                            case (Hexagons.Odd_R H):
-                                dungeon[H.col][H.row] = '@';
-                                lerp.Add((H.col, H.row));
+                            case (Hexagons.Odd_Q H):
+                                dungeon[H.row][H.col] = '@';
+                                lerp.Add((H.row, H.col));
                                 break;
                         }
                     }
@@ -130,12 +130,17 @@ namespace NaiveRandomWalk
 
             path_t path = new path_t { (x, y) };
 
+            // similar to boosted decision trees -> accumulate weight to directions based on previous directions:
+            // 
             var directions = new List<(int x_dir, int y_dir)>()
             {
-                // UNITY USES ODD-R OFFSET COORDINATES FOR FLAT-TOP HEX GRID
-                (0,-1), (0,1), // left-half-offset column
-                (1,1), (1,-1), // right-half-offset column
-                (-1,0), (1,0), // direct row
+                // UNITY USES ODD-Q OFFSET COORDINATES FOR FLAT-TOP HEX GRID
+                // except flipped along horizontal
+                // check notes for clarification
+                // formatted as (r, q): (row, col)
+                (0,-1), (0,1), // bottom-half-offset row in unity: have these weighted with different probabilities given previous direction
+                (1,1), (1,-1), // top-half-offset row in unity
+                (-1,0), (1,0), // direct column
             };
 
             // pick random direction
