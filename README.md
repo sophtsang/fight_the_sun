@@ -22,7 +22,9 @@ This is achieved by hexagonal linear interpolation, where given ```N``` is the M
 [SCHiM](https://schimgame.com/)
 
 ## Important Links
-[Hexagonal Grids from Red Blob Games](https://www.redblobgames.com/grids/hexagons/)
+[Hexagonal Grids from Red Blob Games](https://www.redblobgames.com/grids/hexagons)
+
+[Procedural Dungeon Generation: An In-Depth Guide to Random Walk Algorithms](https://thelinuxcode.com/procedural-dungeon-generation-an-in-depth-guide-to-random-walk-algorithms/)
 
 [Procedural Generation with Wave Function Collapse](https://www.gridbugs.org/wave-function-collapse/)
 
