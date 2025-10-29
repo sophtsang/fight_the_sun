@@ -15,13 +15,14 @@ namespace NaiveRandomWalk
 
     class DungeonWalk
     {
-        private int WIDTH = 50;
-        private int HEIGHT = 20;
+        private int WIDTH = 7;
+        private int HEIGHT = 5;
         private Hexagons hex = new Hexagons();
         private dungeon_t dungeon;
         private Random rand = new Random();
         private bool connected = true;
         private HashSet<(int, int)> visited = new HashSet<(int, int)>();
+        private List<Hexagons.Cube> blocked;
 
         static void Main(string[] args)
         {
@@ -29,8 +30,11 @@ namespace NaiveRandomWalk
 
             procedural.dungeon = procedural.InitDungeon(procedural.WIDTH, procedural.HEIGHT);
 
-            List<path_t> all_paths = procedural.RandomWalk(procedural.dungeon, 5, 25);
+            // for recomputing weights
+            procedural.blocked = procedural.hex.cube_ring(new Hexagons.Cube(0, 0, 0), 2);
+            procedural.blocked.Add(new Hexagons.Cube(0, 0, 0));
 
+            List<path_t> all_paths = procedural.RandomWalk(procedural.dungeon, 1, 20);
             procedural.PrintDungeon();
         }
 
@@ -41,14 +45,12 @@ namespace NaiveRandomWalk
             {
                 dungeon.Add(new List<Char>(Enumerable.Repeat('|', w)));
             }
-
             return dungeon;
         }
 
         List<path_t> RandomWalk(dungeon_t dungeon, int walks, int maxLength)
         {
             List<path_t> randomPaths = new List<path_t> { };
-            // List<(int, int)> pathEnds = new List<(int, int)> { };
 
             for (int n = 0; n < walks; n++)
             {
@@ -58,10 +60,9 @@ namespace NaiveRandomWalk
                 (int x, int y) = (rand.Next(HEIGHT), rand.Next(WIDTH));
                 (int x_link, int y_link) = (x, y);
 
-                // before carving out a new path, always set connected to false.
-                
                 if (visited.Count != 0) (x_link, y_link) = visited.ElementAt(rand.Next(visited.Count));
-                path_t path = Walk(x, y, maxLength, dungeon);
+                List<double> weights = Enumerable.Repeat(1.0 / 6, 6).ToList();
+                path_t path = Walk(x, y, maxLength, dungeon, weights);
                 randomPaths.Add(path);
 
                 foreach ((int x_new, int y_new) in path) visited.Add((x_new, y_new));
@@ -78,33 +79,28 @@ namespace NaiveRandomWalk
                     {
                         switch (hex)
                         {
-                            case (Hexagons.Cube H):
-                                break;
-
-                            case (Hexagons.Axial H):
-                                break;
-
                             case (Hexagons.Odd_Q H):
                                 dungeon[H.row][H.col] = '@';
                                 lerp.Add((H.row, H.col));
                                 break;
                         }
                     }
-
                     randomPaths.Add(lerp);
                 }
 
+                // before carving out a new path, always set connected to false.
                 dungeon[x][y] = '*';
-
                 connected = false;
             }
-
             return randomPaths;
         }
 
-        // helper functions are privates
-        path_t Walk(int x, int y, int maxLength, dungeon_t dungeon)
+        path_t Walk(int x, int y, int maxLength, dungeon_t dungeon, List<double> weights)
         {
+            // UNITY USES ODD-Q OFFSET COORDINATES FOR FLAT-TOP HEX GRID
+            // except flipped along horizontal
+            // check notes for clarification
+            // formatted as (r, q): (row, col)
             // out of bounds, stop walking.
             if (x < 0 || x >= HEIGHT || y < 0 || y >= WIDTH)
             {
@@ -117,7 +113,7 @@ namespace NaiveRandomWalk
             {
                 // if we have already carved out (x, y), this means this path is connected to the existing dungeon.
                 if (visited.Contains((x, y))) connected = true;
-                
+
                 return new path_t { (x, y) };
             }
             else
@@ -130,27 +126,73 @@ namespace NaiveRandomWalk
 
             path_t path = new path_t { (x, y) };
 
-            // similar to boosted decision trees -> accumulate weight to directions based on previous directions:
-            // 
-            var directions = new List<(int x_dir, int y_dir)>()
+            List<Hexagons.Cube> directions = new List<Hexagons.Cube>()
             {
-                // UNITY USES ODD-Q OFFSET COORDINATES FOR FLAT-TOP HEX GRID
-                // except flipped along horizontal
-                // check notes for clarification
-                // formatted as (r, q): (row, col)
-                (0,-1), (0,1), // bottom-half-offset row in unity: have these weighted with different probabilities given previous direction
-                (1,1), (1,-1), // top-half-offset row in unity
-                (-1,0), (1,0), // direct column
+                new Hexagons.Cube(1, 0, -1), new Hexagons.Cube(1, -1, 0), new Hexagons.Cube(0, -1, 1),
+                new Hexagons.Cube(-1, 0, 1), new Hexagons.Cube(-1, 1, 0), new Hexagons.Cube(0, 1, -1)
             };
 
-            // pick random direction
-            int idx = rand.Next(directions.Count);
-            x += directions[idx].x_dir;
-            y += directions[idx].y_dir;
+            // sample next direction in directions given weights.
+            int idx = InverseTransformSampling(weights);
+            Console.WriteLine("at " + y.ToString() + " " + x.ToString());
 
-            path.AddRange(Walk(x, y, maxLength - 1, dungeon));
+            Hexagons.Cube cube = hex.oddq_to_cube(new Hexagons.Odd_Q(x, y));
+            Hexagons.Odd_Q odd_q = hex.cube_to_oddq(hex.cube_add(cube, directions[idx]));
+            (x, y) = (odd_q.row, odd_q.col);
+
+            // if we are at a boundary, make the weights of going in this direction very low, then try resampling again.
+            if (x < 0 || x >= HEIGHT || y < 0 || y >= WIDTH)
+            {
+                weights = RecomputeWeights(directions[idx], weights, -10.0);
+                idx = InverseTransformSampling(weights);
+                odd_q = hex.cube_to_oddq(hex.cube_add(cube, directions[idx]));
+                (x, y) = (odd_q.row, odd_q.col);
+            }
+            // re-compute weights after sampling:
+            weights = RecomputeWeights(directions[idx], weights, 0.5);
+
+            path.AddRange(Walk(x, y, maxLength - 1, dungeon, weights));
 
             return path;
+        }
+
+        List<double> RecomputeWeights(Hexagons.Cube sampled_dir, List<double> weights, double alpha)
+        {
+            // function for recomputing weights given sampled direction and alpha
+            List<Hexagons.Cube> directions = new List<Hexagons.Cube>()
+            {
+                new Hexagons.Cube(1, 0, -1), new Hexagons.Cube(1, -1, 0), new Hexagons.Cube(0, -1, 1),
+                new Hexagons.Cube(-1, 0, 1), new Hexagons.Cube(-1, 1, 0), new Hexagons.Cube(0, 1, -1)
+            };
+
+            foreach ((int i, Hexagons.Cube dir) in directions.Select((dir, idx) => (idx, dir)))
+            {
+                int dist = hex.hex_len_shortest_path(
+                    sampled_dir, dir, blocked
+                );
+                weights[i] *= Math.Exp(-alpha * dist);
+            }
+            return weights.Select(w => w / weights.Sum()).ToList();
+        }
+        
+        int InverseTransformSampling(List<double> weights)
+        {
+            // a little like prefix sum: the ith bin's range is (prefix sum of bin[:i], prefix sum of bin[:i] + weight[i]) 
+            // i.e. weights = [0.3, 0.5, 0.2]
+            // bins: [   |     |  ] -> ranges: [0, 0.3), [0.3, 0.8), [0.8, 1), ranges are [inclusive, exclusive)
+            //       0  0.3   0.8 1
+            // sample a number from Unif(0, 1) and returns the index of the bin that sampled number falls into.
+            double idx = rand.NextDouble();
+            double prefix_weights = 0;
+            for (int i = 0; i < weights.Count; i++)
+            {
+                if (idx >= prefix_weights && idx < prefix_weights + weights[i])
+                {
+                    return i;
+                }
+                prefix_weights += weights[i];
+            }
+            return -1;
         }
 
         void PrintDungeon()

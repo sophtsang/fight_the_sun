@@ -75,7 +75,7 @@ public class Hexagons
         return path;
     }
 
-    Cube cube_round((float q, float r, float s) frac)
+    public Cube cube_round((float q, float r, float s) frac)
     {
         (double q, double r, double s) = (
             Math.Round(frac.q),
@@ -96,26 +96,93 @@ public class Hexagons
         return new Cube((int)q, (int)r, (int)s);
     }
 
-    int cube_distance(Cube a, Cube b)
+    public int cube_distance(Cube a, Cube b)
     {
         // element-wise subtraction, then half the Manhattan distance of 3d 
         // cube -> because a hexagon is just the diagonal of a cube.
         return (Math.Abs(a.q - b.q) + Math.Abs(a.r- b.r) + Math.Abs(a.s - b.s)) / 2;
     }
 
-    Cube oddq_to_cube(Odd_Q hex)
+    public Cube oddq_to_cube(Odd_Q hex)
     {
         int parity = hex.col & 1;
         int q = hex.col;
         int r = hex.row - (hex.col - parity) / 2;
         return new Cube(q, r, -q-r);
     }
-    
-    Odd_Q cube_to_oddq(Cube hex)
+
+    public Odd_Q cube_to_oddq(Cube hex)
     {
         int parity = hex.q & 1;
         int col = hex.q;
         int row = hex.r + (hex.q - parity) / 2;
         return new Odd_Q(row, col);
+    }
+
+    public Cube cube_add(Cube hex, Cube vec)
+    {
+        return new Cube(hex.q + vec.q, hex.r + vec.r, hex.s + vec.s);
+    }
+
+    public Cube cube_scale(Cube hex, int factor)
+    {
+        return new Cube(hex.q * factor, hex.r * factor, hex.s * factor);
+    }
+
+    public List<Cube> cube_ring(Cube center, int radius)
+    {
+        List<Cube> direction_vectors = new List<Cube>()
+        {
+            new Cube(1, 0, -1), new Cube(1, -1, 0), new Cube(0, -1, 1),
+            new Cube(-1, 0, 1), new Cube(-1, 1, 0), new Cube(0, 1, -1)
+        };
+
+        // (1, 1, -2) -> (1, 2, -3) -> (2, 1, -3) -> (2, 0, -2) -> (1, 0, -1) -> (0, 1, -1) -> (0, 2, -2)
+        List<Cube> ring = new List<Cube>();
+        Cube hex = cube_add(center, cube_scale(direction_vectors[4], radius));
+
+        for (int i = 0; i < 6; i++)
+        {
+            for (int j = 0; j < radius; j++)
+            {
+                ring.Add(hex);
+                hex = cube_add(hex, direction_vectors[i]);
+            }
+        }
+        return ring;
+    }
+    
+    public int hex_len_shortest_path(Cube a, Cube b, List<Cube> blocked)
+    {
+        List<Cube> direction_vectors = new List<Cube>()
+        {
+            new Cube(1, 0, -1), new Cube(1, -1, 0), new Cube(0, -1, 1),
+            new Cube(-1, 0, 1), new Cube(-1, 1, 0), new Cube(0, 1, -1)
+        };
+
+        HashSet<Cube> visited = new HashSet<Cube>();
+        Queue<(Cube, int)> unexplored = new Queue<(Cube, int)>();
+        unexplored.Enqueue((a, 0));
+
+        while (unexplored.Count != 0)
+        {
+            (Cube curr, int layer) = unexplored.Dequeue();
+            if (curr == b)
+            {
+                return layer;
+            }
+
+            foreach (Cube vec in direction_vectors)
+            {
+                Cube next = cube_add(curr, vec);
+                // next has not been visited before and is not an obstacle
+                if (!visited.Contains(next) && !blocked.Contains(next))
+                {
+                    unexplored.Enqueue((next, layer + 1));
+                }
+            }
+        }
+
+        return -1;
     }
 }
